@@ -13800,10 +13800,10 @@ const StyledFlexBox = newStyled.div`
 `;
 const Flex = ({
   direction = "row",
-  justifyContent = "center",
-  alignItems = "center",
-  gap = "0",
-  flex = 1,
+  justifyContent,
+  alignItems,
+  gap,
+  flex,
   margin,
   padding,
   width,
@@ -13932,7 +13932,7 @@ const StyledInputContainer = newStyled.input`
   border: solid 1px;
   border-radius: 4px;
   outline: none;
-  ${({ isValid }) => "border-color : " + (isValid ? `${colors.GY1}` : `${colors.red}`)};
+  border-color: ${({ isValid }) => isValid ? colors.GY1 : colors.red};
 
   &:focus {
     border-color: black;
@@ -13962,8 +13962,13 @@ const Input = ({
     }
   );
 };
-const CardNumberForm = ({ cardNumbers, errorMessage, onChange, onBlur }) => {
-  const isInvalidCardNumber = cardNumbers.some((cardNumber) => !cardNumber.isValid);
+const CardNumberForm = ({
+  cardNumbers,
+  errorMessage,
+  onCardInputChange,
+  onCardInputBlur
+}) => {
+  const isValidCardNumber = cardNumbers.every((cardNumber) => cardNumber.isValid);
   return /* @__PURE__ */ jsx$1(
     CardInputLayout,
     {
@@ -13975,8 +13980,8 @@ const CardNumberForm = ({ cardNumbers, errorMessage, onChange, onBlur }) => {
           Input,
           {
             value: cardNumber.value,
-            onChange: (e) => onChange(index, e),
-            onBlur: (e) => onBlur(index, e),
+            onChange: (e) => onCardInputChange(e, index),
+            onBlur: (e) => onCardInputBlur(e, index),
             isValid: cardNumber.isValid,
             placeholder: "1234"
           },
@@ -13990,65 +13995,15 @@ const CardNumberForm = ({ cardNumbers, errorMessage, onChange, onBlur }) => {
             css: css`
             height: 20px;
           `,
-            children: isInvalidCardNumber ? errorMessage : ""
+            children: isValidCardNumber ? "" : errorMessage
           }
         )
       ] })
     }
   );
 };
-const ExpireDateIndex = {
-  MONTH: 0,
-  YEAR: 1
-};
-const currentYear = (/* @__PURE__ */ new Date()).getFullYear().toString().slice(-2);
-const useCardInput = (type, arrLength, valueLength) => {
-  const [value, setValue] = reactExports.useState(
-    Array.from({ length: arrLength }, () => ({ value: "", isValid: true }))
-  );
-  const [errorMessage, setErrorMessage] = reactExports.useState("숫자를 입력하세요.");
-  const handleChange = (index, e) => {
-    setValue((prev2) => {
-      const newArr = [...prev2];
-      newArr[index].value = e.target.value;
-      return newArr;
-    });
-  };
-  const validateInput = (value2, index) => {
-    if (value2.length < valueLength) {
-      setErrorMessage(`${valueLength}자리의 숫자를 입력하셔야 합니다.`);
-      return false;
-    }
-    if (!new RegExp(`^\\d{${valueLength}}$`).test(value2)) {
-      setErrorMessage("숫자를 입력하세요.");
-      return false;
-    }
-    if (type === "expireDate") {
-      if (index === ExpireDateIndex.MONTH && (parseInt(value2) < 1 || parseInt(value2) > 12)) {
-        setErrorMessage("월을 잘못 입력했습니다.");
-        return false;
-      }
-      if (index === ExpireDateIndex.YEAR && parseInt(value2) < parseInt(currentYear)) {
-        setErrorMessage("만료 년도는 현재 년도보다 낮을 수 없습니다.");
-        return false;
-      }
-    }
-    return true;
-  };
-  const handleBlur = (index, e) => {
-    const inputValue = e.target.value;
-    const isValidate = validateInput(inputValue, index);
-    setValue((prev2) => {
-      const newArr = [...prev2];
-      newArr[index].isValid = isValidate;
-      return newArr;
-    });
-  };
-  return { value, errorMessage, handleChange, handleBlur };
-};
-const CVCForm = () => {
-  const { value: cvcNumber, errorMessage, handleChange, handleBlur } = useCardInput("CVC", 1, 3);
-  const isInvalidCVC = cvcNumber.some((cvcNumber2) => !cvcNumber2.isValid);
+const CVCForm = ({ cvcNumber, errorMessage, onCardInputChange, onCardInputBlur }) => {
+  const isValidCVC = cvcNumber.every((cvcNumber2) => cvcNumber2.isValid);
   return /* @__PURE__ */ jsx$1(CardInputLayout, { headerText: "CVC 번호를 입력해 주세요.", label: "CVC", children: /* @__PURE__ */ jsxs(Flex, { direction: "column", alignItems: "flex-start", width: "100%", gap: "4px", children: [
     cvcNumber.map((cvc, index) => /* @__PURE__ */ jsx$1(
       Input,
@@ -14057,8 +14012,8 @@ const CVCForm = () => {
         maxLength: 3,
         placeholder: "CVC 번호(카드 뒷면의 서명란에 인쇄된 숫자 끝 3자리)",
         isValid: cvc.isValid,
-        onChange: (e) => handleChange(index, e),
-        onBlur: (e) => handleBlur(index, e)
+        onChange: (e) => onCardInputChange(e, index),
+        onBlur: (e) => onCardInputBlur(e, index)
       },
       `cvc-${index}`
     )),
@@ -14070,14 +14025,20 @@ const CVCForm = () => {
         css: css`
             height: 20px;
           `,
-        children: isInvalidCVC ? errorMessage : ""
+        children: isValidCVC ? "" : errorMessage
       }
     )
   ] }) });
 };
 const ExpireDatePlaceholder = ["MM", "YY"];
-const ExpireDateForm = ({ expireDate, errorMessage, onChange, onBlur }) => {
-  const isInvalidDate = expireDate.some((expireDate2) => !expireDate2.isValid);
+const ExpireDateForm = ({
+  expireDate,
+  errorMessage,
+  onCardExpireDateInputChange,
+  onCardExpireDateInputBlur
+}) => {
+  const isValidDate = expireDate.month.isValid && expireDate.year.isValid;
+  const expireDateKeys = Object.keys(expireDate);
   return /* @__PURE__ */ jsx$1(
     CardInputLayout,
     {
@@ -14085,17 +14046,17 @@ const ExpireDateForm = ({ expireDate, errorMessage, onChange, onBlur }) => {
       description: "월/년도(MMYY)를 순서대로 입력해 주세요.",
       label: "유효기간",
       children: /* @__PURE__ */ jsxs(Flex, { direction: "column", alignItems: "flex-start", width: "100%", gap: "4px", children: [
-        /* @__PURE__ */ jsx$1(Flex, { gap: "8px", width: "100%", children: expireDate.map((date, index) => /* @__PURE__ */ jsx$1(
+        /* @__PURE__ */ jsx$1(Flex, { gap: "8px", width: "100%", children: expireDateKeys.map((key, index) => /* @__PURE__ */ jsx$1(
           Input,
           {
-            value: date.value,
+            value: expireDate[key].value,
             maxLength: 2,
-            onChange: (e) => onChange(index, e),
-            onBlur: (e) => onBlur(index, e),
-            isValid: date.isValid,
+            onChange: (e) => onCardExpireDateInputChange(e, key),
+            onBlur: (e) => onCardExpireDateInputBlur(e, key),
+            isValid: expireDate[key].isValid,
             placeholder: ExpireDatePlaceholder[index]
           },
-          `expire-${index}`
+          `expire-${key}`
         )) }),
         /* @__PURE__ */ jsx$1(
           Text,
@@ -14105,7 +14066,7 @@ const ExpireDateForm = ({ expireDate, errorMessage, onChange, onBlur }) => {
             css: css`
             height: 20px;
           `,
-            children: isInvalidDate ? errorMessage : ""
+            children: isValidDate ? "" : errorMessage
           }
         )
       ] })
@@ -14176,11 +14137,115 @@ const CardPreview = ({ cardNumbers, expireDate }) => {
             height: 36px;
             text-align: left;
           `,
-          children: expireDate[0].value ? expireDate.map((date) => date.value).join(" / ") : ""
+          children: expireDate.month.value ? `${expireDate.month.value} / ${expireDate.year.value}` : ""
         }
       )
     ] })
   ] });
+};
+const validateCardNumbers = (value, type) => {
+  const cardNumberRegex = new RegExp(`^\\d{${CardInputTypeOptions[type].valueLength}}$`);
+  if (!cardNumberRegex.test(value)) {
+    return {
+      isValid: false,
+      errorMessage: `${CardInputTypeOptions[type].valueLength}자리의 숫자를 입력하세요.`
+    };
+  }
+  return { isValid: true, errorMessage: "" };
+};
+const CardInputTypeOptions = {
+  cardNumber: {
+    valueLength: 4,
+    arrLength: 4
+  },
+  CVC: {
+    valueLength: 3,
+    arrLength: 1
+  }
+};
+const useCardInput = (type) => {
+  const [value, setValue] = reactExports.useState(
+    Array.from({ length: CardInputTypeOptions[type].arrLength }, () => ({
+      value: "",
+      isValid: true
+    }))
+  );
+  const [errorMessage, setErrorMessage] = reactExports.useState("형식에 맞는 값을 입력해주세요.");
+  const handleChange = (e, index) => {
+    setValue((prev2) => {
+      const newArr = [...prev2];
+      newArr[index].value = e.target.value;
+      return newArr;
+    });
+  };
+  const validateInput = (value2) => {
+    const { isValid, errorMessage: errorMessage2 } = validateCardNumbers(value2, type);
+    if (!isValid) {
+      setErrorMessage(errorMessage2);
+    }
+    return isValid;
+  };
+  const handleBlur = (e, index) => {
+    const inputValue = e.target.value;
+    const isValidate = validateInput(inputValue);
+    setValue((prev2) => {
+      const newArr = [...prev2];
+      newArr[index].isValid = isValidate;
+      return newArr;
+    });
+  };
+  return { value, errorMessage, handleChange, handleBlur };
+};
+const currentYear = (/* @__PURE__ */ new Date()).getFullYear().toString().slice(-2);
+const validateExpireDate = (value, key) => {
+  const expireDateRegex = new RegExp(`^\\d{2}$`);
+  if (!expireDateRegex.test(value)) {
+    return { isValid: false, errorMessage: "연도와 월은 두 자리 숫자를 입력하세요. 예시: 01, 12" };
+  }
+  if (key === "month" && (parseInt(value) < 1 || parseInt(value) > 12)) {
+    return {
+      isValid: false,
+      errorMessage: "월을 잘못 입력했습니다. 1~12 사이의 숫자를 입력해주세요."
+    };
+  }
+  if (key === "year" && parseInt(value) < parseInt(currentYear)) {
+    return {
+      isValid: false,
+      errorMessage: `만료 년도는 현재 년도보다 낮을 수 없습니다. 현재 연도: ${currentYear}`
+    };
+  }
+  return { isValid: true, errorMessage: "" };
+};
+const useExpireDateInput = () => {
+  const [value, setValue] = reactExports.useState({
+    month: { value: "", isValid: true },
+    year: { value: "", isValid: true }
+  });
+  const [errorMessage, setErrorMessage] = reactExports.useState("올바른 날짜를 입력해주세요.");
+  const handleChange = (e, key) => {
+    setValue((prev2) => {
+      const newDateObj = { ...prev2 };
+      newDateObj[key].value = e.target.value;
+      return newDateObj;
+    });
+  };
+  const handleBlur = (e, key) => {
+    const inputValue = e.target.value;
+    const isValidate = validateInput(inputValue, key);
+    setValue((prev2) => {
+      const newDateObj = { ...prev2 };
+      newDateObj[key].isValid = isValidate;
+      return newDateObj;
+    });
+  };
+  const validateInput = (value2, key) => {
+    const { isValid, errorMessage: errorMessage2 } = validateExpireDate(value2, key);
+    if (!isValid) {
+      setErrorMessage(errorMessage2);
+    }
+    return isValid;
+  };
+  return { value, errorMessage, handleChange, handleBlur };
 };
 function App() {
   const {
@@ -14188,13 +14253,19 @@ function App() {
     errorMessage: cardErrorMessage,
     handleChange,
     handleBlur
-  } = useCardInput("cardNumber", 4, 4);
+  } = useCardInput("cardNumber");
   const {
     value: expireDate,
     errorMessage: expireDateErrorMessage,
     handleChange: handleExpireDateChange,
     handleBlur: handleExpireDateBlur
-  } = useCardInput("expireDate", 2, 2);
+  } = useExpireDateInput();
+  const {
+    value: cvcNumber,
+    errorMessage: cvcErrorMessage,
+    handleChange: handleCVCChange,
+    handleBlur: handleCVCBlur
+  } = useCardInput("CVC");
   return /* @__PURE__ */ jsxs(AppLayout, { children: [
     /* @__PURE__ */ jsx$1(Flex, { padding: "20px 0", children: /* @__PURE__ */ jsx$1(CardPreview, { cardNumbers, expireDate }) }),
     /* @__PURE__ */ jsxs(Flex, { direction: "column", gap: "10px", margin: "30px 0", children: [
@@ -14203,8 +14274,8 @@ function App() {
         {
           cardNumbers,
           errorMessage: cardErrorMessage,
-          onChange: handleChange,
-          onBlur: handleBlur
+          onCardInputChange: handleChange,
+          onCardInputBlur: handleBlur
         }
       ),
       /* @__PURE__ */ jsx$1(
@@ -14212,11 +14283,19 @@ function App() {
         {
           expireDate,
           errorMessage: expireDateErrorMessage,
-          onChange: handleExpireDateChange,
-          onBlur: handleExpireDateBlur
+          onCardExpireDateInputChange: handleExpireDateChange,
+          onCardExpireDateInputBlur: handleExpireDateBlur
         }
       ),
-      /* @__PURE__ */ jsx$1(CVCForm, {})
+      /* @__PURE__ */ jsx$1(
+        CVCForm,
+        {
+          cvcNumber,
+          errorMessage: cvcErrorMessage,
+          onCardInputChange: handleCVCChange,
+          onCardInputBlur: handleCVCBlur
+        }
+      )
     ] })
   ] });
 }
