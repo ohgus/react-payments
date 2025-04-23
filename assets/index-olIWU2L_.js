@@ -13788,7 +13788,7 @@ const AppLayout = ({ children }) => {
 };
 const StyledFlexBox = newStyled.div`
   display: flex;
-  flex-direction: ${({ direction = "column" }) => direction};
+  flex-direction: ${({ direction = "row" }) => direction};
   justify-content: ${({ justifyContent = "center" }) => justifyContent};
   align-items: ${({ alignItems = "center" }) => alignItems};
   gap: ${({ gap = 0 }) => typeof gap === "number" ? `${gap}px` : gap};
@@ -13798,35 +13798,8 @@ const StyledFlexBox = newStyled.div`
   width: ${({ width = "auto" }) => width};
   height: ${({ height = "auto" }) => height};
 `;
-const Flex = ({
-  direction = "row",
-  justifyContent,
-  alignItems,
-  gap,
-  flex,
-  margin,
-  padding,
-  width,
-  height,
-  children,
-  ...props
-}) => {
-  return /* @__PURE__ */ jsx$1(
-    StyledFlexBox,
-    {
-      direction,
-      justifyContent,
-      alignItems,
-      gap,
-      flex,
-      margin,
-      padding,
-      width,
-      height,
-      ...props,
-      children
-    }
-  );
+const Flex = ({ children, ...props }) => {
+  return /* @__PURE__ */ jsx$1(StyledFlexBox, { ...props, children });
 };
 const variants = {
   Title: css`
@@ -13945,7 +13918,7 @@ const StyledInputContainer = newStyled.input`
   }
 `;
 const Input = ({
-  value = "",
+  value,
   minLength = 1,
   maxLength = 4,
   isValid = false,
@@ -13968,7 +13941,6 @@ const CardNumberForm = ({
   onCardInputChange,
   onCardInputBlur
 }) => {
-  const isValidCardNumber = cardNumbers.every((cardNumber) => cardNumber.isValid);
   return /* @__PURE__ */ jsx$1(
     CardInputLayout,
     {
@@ -13995,7 +13967,7 @@ const CardNumberForm = ({
             css: css`
             height: 20px;
           `,
-            children: isValidCardNumber ? "" : errorMessage
+            children: errorMessage ? errorMessage : ""
           }
         )
       ] })
@@ -14003,7 +13975,6 @@ const CardNumberForm = ({
   );
 };
 const CVCForm = ({ cvcNumber, errorMessage, onCardInputChange, onCardInputBlur }) => {
-  const isValidCVC = cvcNumber.every((cvcNumber2) => cvcNumber2.isValid);
   return /* @__PURE__ */ jsx$1(CardInputLayout, { headerText: "CVC 번호를 입력해 주세요.", label: "CVC", children: /* @__PURE__ */ jsxs(Flex, { direction: "column", alignItems: "flex-start", width: "100%", gap: "4px", children: [
     cvcNumber.map((cvc, index) => /* @__PURE__ */ jsx$1(
       Input,
@@ -14025,7 +13996,7 @@ const CVCForm = ({ cvcNumber, errorMessage, onCardInputChange, onCardInputBlur }
         css: css`
             height: 20px;
           `,
-        children: isValidCVC ? "" : errorMessage
+        children: errorMessage ? errorMessage : ""
       }
     )
   ] }) });
@@ -14037,7 +14008,6 @@ const ExpireDateForm = ({
   onCardExpireDateInputChange,
   onCardExpireDateInputBlur
 }) => {
-  const isValidDate = expireDate.month.isValid && expireDate.year.isValid;
   const expireDateKeys = Object.keys(expireDate);
   return /* @__PURE__ */ jsx$1(
     CardInputLayout,
@@ -14066,7 +14036,7 @@ const ExpireDateForm = ({
             css: css`
             height: 20px;
           `,
-            children: isValidDate ? "" : errorMessage
+            children: errorMessage ? errorMessage : ""
           }
         )
       ] })
@@ -14170,7 +14140,7 @@ const useCardInput = (type) => {
       isValid: true
     }))
   );
-  const [errorMessage, setErrorMessage] = reactExports.useState("형식에 맞는 값을 입력해주세요.");
+  const [errorMessage, setErrorMessage] = reactExports.useState(null);
   const handleChange = (e, index) => {
     setValue((prev2) => {
       const newArr = [...prev2];
@@ -14182,7 +14152,9 @@ const useCardInput = (type) => {
     const { isValid, errorMessage: errorMessage2 } = validateCardNumbers(value2, type);
     if (!isValid) {
       setErrorMessage(errorMessage2);
+      return isValid;
     }
+    setErrorMessage(null);
     return isValid;
   };
   const handleBlur = (e, index) => {
@@ -14196,9 +14168,9 @@ const useCardInput = (type) => {
   };
   return { value, errorMessage, handleChange, handleBlur };
 };
-const currentYear = (/* @__PURE__ */ new Date()).getFullYear().toString().slice(-2);
 const validateExpireDate = (value, key) => {
   const expireDateRegex = new RegExp(`^\\d{2}$`);
+  const currentYear = (/* @__PURE__ */ new Date()).getFullYear().toString().slice(-2);
   if (!expireDateRegex.test(value)) {
     return { isValid: false, errorMessage: "연도와 월은 두 자리 숫자를 입력하세요. 예시: 01, 12" };
   }
@@ -14221,7 +14193,7 @@ const useExpireDateInput = () => {
     month: { value: "", isValid: true },
     year: { value: "", isValid: true }
   });
-  const [errorMessage, setErrorMessage] = reactExports.useState("올바른 날짜를 입력해주세요.");
+  const [errorMessage, setErrorMessage] = reactExports.useState(null);
   const handleChange = (e, key) => {
     setValue((prev2) => {
       const newDateObj = { ...prev2 };
@@ -14242,7 +14214,9 @@ const useExpireDateInput = () => {
     const { isValid, errorMessage: errorMessage2 } = validateExpireDate(value2, key);
     if (!isValid) {
       setErrorMessage(errorMessage2);
+      return isValid;
     }
+    setErrorMessage(null);
     return isValid;
   };
   return { value, errorMessage, handleChange, handleBlur };
