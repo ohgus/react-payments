@@ -20222,14 +20222,11 @@ function isAllFilledInput(value, type) {
 function canMoveNextInput(value, type) {
   const isAllValid = isAllValidInput(value);
   const isAllFilled = isAllFilledInput(value, type);
-  if (isAllValid && isAllFilled) {
-    return true;
-  }
-  return false;
+  return isAllValid && isAllFilled;
 }
 const validateExpireDate = (value, key) => {
   const expireDateRegex = new RegExp(`^\\d{2}$`);
-  const currentYear = (/* @__PURE__ */ new Date()).getFullYear().toString().slice(-2);
+  const currentYear = (/* @__PURE__ */ new Date()).getFullYear() % 100;
   if (!expireDateRegex.test(value)) {
     return { isValid: false, errorMessage: "연도와 월은 두 자리 숫자를 입력하세요. 예시: 01, 12" };
   }
@@ -20239,7 +20236,7 @@ const validateExpireDate = (value, key) => {
       errorMessage: "월을 잘못 입력했습니다. 1~12 사이의 숫자를 입력해주세요."
     };
   }
-  if (key === "year" && parseInt(value) < parseInt(currentYear)) {
+  if (key === "year" && parseInt(value) < currentYear) {
     return {
       isValid: false,
       errorMessage: `만료 년도는 현재 년도보다 낮을 수 없습니다. 현재 연도: ${currentYear}`
@@ -20303,13 +20300,16 @@ function isAllValidDate(value) {
 function isAllFilledDate(value) {
   return value.month.value.length === 2 && value.year.value.length === 2;
 }
+function isAllInRange(value) {
+  const isMonthInRange = parseInt(value.month.value) >= 1 && parseInt(value.month.value) <= 12;
+  const isYearInRange = parseInt(value.year.value) >= (/* @__PURE__ */ new Date()).getFullYear() % 100;
+  return isMonthInRange && isYearInRange;
+}
 function canMoveNextStep(value) {
   const isAllValid = isAllValidDate(value);
   const isAllFilled = isAllFilledDate(value);
-  if (isAllValid && isAllFilled) {
-    return true;
-  }
-  return false;
+  const isAllDateInRange = isAllInRange(value);
+  return isAllValid && isAllFilled && isAllDateInRange;
 }
 const CardFormLayout = ({ children }) => {
   return /* @__PURE__ */ jsx$1("form", { children: /* @__PURE__ */ jsx$1(Flex, { direction: "column", gap: "10px", margin: "30px 0", flex: 0, children }) });
