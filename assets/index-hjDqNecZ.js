@@ -1927,6 +1927,7 @@ var Emotion = /* @__PURE__ */ withEmotionCache(function(props, cache, ref) {
   }), /* @__PURE__ */ reactExports.createElement(WrappedComponent, newProps));
 });
 var Emotion$1 = Emotion;
+var Fragment = jsxRuntimeExports.Fragment;
 var jsx$1 = function jsx(type, props, key) {
   if (!hasOwn.call(props, "css")) {
     return jsxRuntimeExports.jsx(type, props, key);
@@ -19665,8 +19666,7 @@ const Home = () => {
     /* @__PURE__ */ jsx$1(Button, { height: "60px", borderType: "rounded", onClick: () => navigate("/register"), children: /* @__PURE__ */ jsx$1(Text, { variant: "Title", fontWeight: "medium", color: "white", children: "카드 등록하러 가기" }) })
   ] }) });
 };
-const SubmitButton = ({ cardType, cardNumber, buttonText }) => {
-  const navigate = useNavigate();
+const SubmitButton = ({ children, onSubmit }) => {
   return /* @__PURE__ */ jsx$1(
     Button,
     {
@@ -19676,11 +19676,22 @@ const SubmitButton = ({ cardType, cardNumber, buttonText }) => {
       left: "0",
       right: "0",
       bottom: "0",
-      onClick: () => navigate("/result", { state: { cardType, cardNumber } }),
-      children: /* @__PURE__ */ jsx$1(Text, { variant: "Title", fontWeight: "bold", color: "white", children: buttonText })
+      onClick: onSubmit,
+      children: /* @__PURE__ */ jsx$1(Text, { variant: "Title", fontWeight: "bold", color: "white", children })
     }
   );
 };
+const cardBrandColors = {
+  BC카드: "#F04651",
+  신한카드: "#0046FF",
+  카카오뱅크: "#FFE600",
+  현대카드: colors.black,
+  우리카드: "#007BC8",
+  롯데카드: "#ED1C24",
+  하나카드: "#009490",
+  국민카드: "#6A6056"
+};
+const cardBrandOptions = Object.keys(cardBrandColors);
 const CardInputLayout = ({ headerText, description, label, children }) => {
   return /* @__PURE__ */ jsxs(
     Flex,
@@ -19755,17 +19766,14 @@ const StyledSelected = newStyled.div`
   left: 50%;
   transform: translate(-50%, -50%);
 `;
-const StyledCustomImage = newStyled.img`
-  width: ${({ width }) => width || "100%"};
-  height: ${({ height }) => height || "100%"};
-`;
-const CustomImage = ({ ...props }) => {
-  return /* @__PURE__ */ jsx$1(StyledCustomImage, { ...props });
+const SelectArrow = ({ isOpen }) => {
+  const arrowIconSrc = isOpen ? "./icon/chevron-down.png" : "./icon/chevron-up.png";
+  return /* @__PURE__ */ jsx$1("img", { src: arrowIconSrc, alt: "arrow", width: "16px", height: "16px" });
 };
-const SelectedPreview = ({ selectedItem, arrowIconSrc, placeholder }) => {
+const SelectedPreview = ({ selectedItem, isOpen, placeholder }) => {
   return /* @__PURE__ */ jsx$1(StyledSelected, { children: /* @__PURE__ */ jsxs(Flex, { direction: "row", justifyContent: "space-between", children: [
     /* @__PURE__ */ jsx$1(Text, { variant: "Caption", fontWeight: "regular", children: selectedItem ? selectedItem : placeholder }),
-    /* @__PURE__ */ jsx$1(CustomImage, { src: arrowIconSrc, alt: "arrow", width: "16px", height: "16px" })
+    /* @__PURE__ */ jsx$1(SelectArrow, { isOpen })
   ] }) });
 };
 const StyledSelectItem = newStyled.li`
@@ -19782,37 +19790,20 @@ const StyledSelectItem = newStyled.li`
 const SelectItem = ({ option, onClick }) => {
   return /* @__PURE__ */ jsx$1(StyledSelectItem, { onClick, children: /* @__PURE__ */ jsx$1(Text, { variant: "Caption", fontWeight: "regular", children: option }) });
 };
-const Select = ({
-  options,
-  placeholder,
-  isOpen,
-  selectedItem,
-  onItemSelect,
-  onToggle
-}) => {
-  const arrowIconSrc = isOpen ? "./icon/chevron-down.png" : "./icon/chevron-up.png";
-  return /* @__PURE__ */ jsxs(StyledSelectContainer, { isOpen, onClick: onToggle, children: [
-    /* @__PURE__ */ jsx$1(
-      SelectedPreview,
-      {
-        selectedItem,
-        arrowIconSrc,
-        placeholder
-      }
-    ),
-    isOpen && /* @__PURE__ */ jsx$1(StyledSelectBox, { children: options.map((option) => /* @__PURE__ */ jsx$1(SelectItem, { option, onClick: () => onItemSelect(option) }, option)) })
+const Select = ({ options, placeholder, selectedItem, onItemSelect }) => {
+  const [isOpen, setIsOpen] = reactExports.useState(false);
+  const handleToggle = () => {
+    setIsOpen(!isOpen);
+  };
+  const handleItemSelect = (value) => {
+    onItemSelect(value);
+    setIsOpen(false);
+  };
+  return /* @__PURE__ */ jsxs(StyledSelectContainer, { isOpen, onClick: handleToggle, children: [
+    /* @__PURE__ */ jsx$1(SelectedPreview, { selectedItem, isOpen, placeholder }),
+    isOpen && /* @__PURE__ */ jsx$1(StyledSelectBox, { children: options.map((option) => /* @__PURE__ */ jsx$1(SelectItem, { option, onClick: () => handleItemSelect(option) }, option)) })
   ] });
 };
-const cardBrandOptions = [
-  "BC카드",
-  "신한카드",
-  "카카오뱅크",
-  "현대카드",
-  "우리카드",
-  "롯데카드",
-  "하나카드",
-  "국민카드"
-];
 const CardBrandSelectForm = (props) => {
   return /* @__PURE__ */ jsx$1(
     CardInputLayout,
@@ -19866,7 +19857,7 @@ const Input = ({
 };
 const useFocus = (length2) => {
   const refs = Array.from({ length: length2 }, () => reactExports.useRef(null));
-  reactExports.useEffect(() => {
+  reactExports.useEffect(function focusOnFirstRef() {
     if (refs[0].current) {
       refs[0].current.focus();
     }
@@ -19920,7 +19911,7 @@ const CardPasswordForm = ({
   onCardInputChange,
   onCardInputBlur
 }) => {
-  const { refs } = useFocus(password.length);
+  const { refs } = useFocus(1);
   return /* @__PURE__ */ jsx$1(
     CardInputLayout,
     {
@@ -19928,20 +19919,19 @@ const CardPasswordForm = ({
       description: "앞의 2자리를 입력해 주세요.",
       label: "비밀번호 앞 2자리",
       children: /* @__PURE__ */ jsxs(Flex, { direction: "column", alignItems: "flex-start", width: "100%", gap: "4px", children: [
-        password.map((password2, index) => /* @__PURE__ */ jsx$1(
+        /* @__PURE__ */ jsx$1(
           Input,
           {
+            value: password[0].value,
             type: "password",
             maxLength: 2,
-            value: password2.value,
-            onChange: (e) => onCardInputChange(e, index),
-            onBlur: (e) => onCardInputBlur(e, index),
-            isValid: password2.isValid,
-            ref: refs[index],
+            onChange: (e) => onCardInputChange(e, 0),
+            onBlur: (e) => onCardInputBlur(e, 0),
+            isValid: password[0].isValid,
+            ref: refs[0],
             autoComplete: "off"
-          },
-          `password-${index}`
-        )),
+          }
+        ),
         /* @__PURE__ */ jsx$1(
           Text,
           {
@@ -19958,21 +19948,20 @@ const CardPasswordForm = ({
   );
 };
 const CVCForm = ({ cvcNumber, errorMessage, onCardInputChange, onCardInputBlur }) => {
-  const { refs } = useFocus(cvcNumber.length);
+  const { refs } = useFocus(1);
   return /* @__PURE__ */ jsx$1(CardInputLayout, { headerText: "CVC 번호를 입력해 주세요.", label: "CVC", children: /* @__PURE__ */ jsxs(Flex, { direction: "column", alignItems: "flex-start", width: "100%", gap: "4px", children: [
-    cvcNumber.map((cvc, index) => /* @__PURE__ */ jsx$1(
+    /* @__PURE__ */ jsx$1(
       Input,
       {
-        value: cvc.value,
+        value: cvcNumber[0].value,
         maxLength: 3,
         placeholder: "CVC 번호(카드 뒷면의 서명란에 인쇄된 숫자 끝 3자리)",
-        isValid: cvc.isValid,
-        onChange: (e) => onCardInputChange(e, index),
-        onBlur: (e) => onCardInputBlur(e, index),
-        ref: refs[index]
-      },
-      `cvc-${index}`
-    )),
+        isValid: cvcNumber[0].isValid,
+        onChange: (e) => onCardInputChange(e, 0),
+        onBlur: (e) => onCardInputBlur(e, 0),
+        ref: refs[0]
+      }
+    ),
     /* @__PURE__ */ jsx$1(
       Text,
       {
@@ -20029,16 +20018,6 @@ const ExpireDateForm = ({
       ] })
     }
   );
-};
-const cardBrandColors = {
-  BC카드: "#F04651",
-  신한카드: "#0046FF",
-  카카오뱅크: "#FFE600",
-  현대카드: colors.black,
-  우리카드: "#007BC8",
-  롯데카드: "#ED1C24",
-  하나카드: "#009490",
-  국민카드: "#6A6056"
 };
 const StyledCardContainer = newStyled.div`
   position: relative;
@@ -20111,16 +20090,11 @@ const CardPreview = ({ cardNumbers, expireDate, cardBrand }) => {
   ] });
 };
 const useBrandSelectInput = () => {
-  const [isOpen, setIsOpen] = reactExports.useState(false);
   const [selectedItem, setSelectedItem] = reactExports.useState(null);
   const handleItemSelect = (value) => {
     setSelectedItem(value);
-    setIsOpen(false);
   };
-  const handleToggleSelect = () => {
-    setIsOpen(!isOpen);
-  };
-  return { isOpen, selectedItem, handleItemSelect, handleToggleSelect };
+  return { selectedItem, handleItemSelect };
 };
 const validateCardNumbers = (value, type) => {
   const cardNumberRegex = new RegExp(`^\\d{${CardInputTypeOptions[type].valueLength}}$`);
@@ -20163,7 +20137,7 @@ const useCardInput = (type) => {
     }))
   );
   const [errorMessage, setErrorMessage] = reactExports.useState(null);
-  const isAllValidAndFilled = canMoveNextInput(value, type);
+  const isAllValidAndFilled = checkCanMoveNextInput(value, type);
   const handleChange = (e, index) => {
     const inputValue = e.target.value;
     const { isValid: isValidChange, errorMessage: errorMessage2 } = validateInputChange(inputValue);
@@ -20179,32 +20153,36 @@ const useCardInput = (type) => {
     setValue((prev2) => {
       const newArr = [...prev2];
       newArr[index].value = inputValue;
+      newArr[index].isValid = isValidChange;
       if (isAllValidInput(newArr)) {
         setErrorMessage(null);
       }
       return newArr;
     });
-  };
-  const validateInput = (value2) => {
-    const { isValid, errorMessage: errorMessage2 } = validateCardNumbers(value2, type);
-    if (!isValid) {
-      setErrorMessage(errorMessage2);
-      return isValid;
-    }
-    return isValid;
   };
   const handleBlur = (e, index) => {
     const inputValue = e.target.value;
-    const isValidate = validateInput(inputValue);
-    setValue((prev2) => {
-      const newArr = [...prev2];
-      newArr[index].isValid = isValidate;
-      if (isAllValidInput(newArr)) {
-        setErrorMessage(null);
-      }
-      return newArr;
-    });
+    const { isValid, errorMessage: errorMessage2 } = validateCardNumbers(inputValue, type);
+    if (!isValid) {
+      setErrorMessage(errorMessage2);
+      setValue((prev2) => {
+        const newArr = [...prev2];
+        newArr[index].isValid = isValid;
+        return newArr;
+      });
+    }
   };
+  function isAllValidInput(value2) {
+    return value2.every((item) => item.isValid);
+  }
+  function isAllFilledInput(value2, type2) {
+    return value2.every((item) => item.value.length === CardInputTypeOptions[type2].valueLength);
+  }
+  function checkCanMoveNextInput(value2, type2) {
+    const isAllValid = isAllValidInput(value2);
+    const isAllFilled = isAllFilledInput(value2, type2);
+    return isAllValid && isAllFilled;
+  }
   return {
     value,
     errorMessage,
@@ -20213,34 +20191,40 @@ const useCardInput = (type) => {
     isAllValidAndFilled
   };
 };
-function isAllValidInput(value) {
-  return value.every((item) => item.isValid);
-}
-function isAllFilledInput(value, type) {
-  return value.every((item) => item.value.length === CardInputTypeOptions[type].valueLength);
-}
-function canMoveNextInput(value, type) {
-  const isAllValid = isAllValidInput(value);
-  const isAllFilled = isAllFilledInput(value, type);
-  return isAllValid && isAllFilled;
-}
-const validateExpireDate = (value, key) => {
+const validateExpireDate = (value) => {
   const expireDateRegex = new RegExp(`^\\d{2}$`);
-  const currentYear = (/* @__PURE__ */ new Date()).getFullYear() % 100;
   if (!expireDateRegex.test(value)) {
     return { isValid: false, errorMessage: "연도와 월은 두 자리 숫자를 입력하세요. 예시: 01, 12" };
   }
-  if (key === "month" && (parseInt(value) < 1 || parseInt(value) > 12)) {
+  return { isValid: true, errorMessage: null };
+};
+const validateExpireDateInputChange = (value, key) => {
+  const currentYear = (/* @__PURE__ */ new Date()).getFullYear() % 100;
+  if (isNaN(Number(value))) {
     return {
       isValid: false,
-      errorMessage: "월을 잘못 입력했습니다. 1~12 사이의 숫자를 입력해주세요."
+      errorMessage: "숫자를 입력하세요."
     };
   }
-  if (key === "year" && parseInt(value) < currentYear) {
-    return {
-      isValid: false,
-      errorMessage: `만료 년도는 현재 년도보다 낮을 수 없습니다. 현재 연도: ${currentYear}`
-    };
+  if (value.length === 2) {
+    if (key === "month") {
+      const isInvalidMonth = parseInt(value) < 1 || parseInt(value) > 12;
+      if (isInvalidMonth) {
+        return {
+          isValid: false,
+          errorMessage: "월을 잘못 입력했습니다. 1~12 사이의 숫자를 입력해주세요."
+        };
+      }
+    }
+    if (key === "year") {
+      const isPastYear = parseInt(value) < currentYear;
+      if (isPastYear) {
+        return {
+          isValid: false,
+          errorMessage: `만료 년도는 현재 년도보다 낮을 수 없습니다. 현재 연도: ${currentYear}`
+        };
+      }
+    }
   }
   return { isValid: true, errorMessage: null };
 };
@@ -20250,10 +20234,10 @@ const useExpireDateInput = () => {
     year: { value: "", isValid: true }
   });
   const [errorMessage, setErrorMessage] = reactExports.useState(null);
-  const isAllValidAndFilled = canMoveNextStep(value);
+  const isAllValidAndFilled = checkCanMoveNextStep(value);
   const handleChange = (e, key) => {
     const inputValue = e.target.value;
-    const { isValid: isValidChange, errorMessage: errorMessage2 } = validateInputChange(inputValue);
+    const { isValid: isValidChange, errorMessage: errorMessage2 } = validateExpireDateInputChange(inputValue, key);
     if (!isValidChange) {
       setErrorMessage(errorMessage2);
       setValue((prev2) => {
@@ -20266,6 +20250,7 @@ const useExpireDateInput = () => {
     setValue((prev2) => {
       const newDateObj = { ...prev2 };
       newDateObj[key].value = inputValue;
+      newDateObj[key].isValid = isValidChange;
       if (isAllValidDate(newDateObj)) {
         setErrorMessage(null);
       }
@@ -20274,45 +20259,44 @@ const useExpireDateInput = () => {
   };
   const handleBlur = (e, key) => {
     const inputValue = e.target.value;
-    const isValidate = validateInput(inputValue, key);
-    setValue((prev2) => {
-      const newDateObj = { ...prev2 };
-      newDateObj[key].isValid = isValidate;
-      if (isAllValidDate(newDateObj)) {
-        setErrorMessage(null);
-      }
-      return newDateObj;
-    });
-  };
-  const validateInput = (value2, key) => {
-    const { isValid, errorMessage: errorMessage2 } = validateExpireDate(value2, key);
+    const { isValid, errorMessage: errorMessage2 } = validateExpireDate(inputValue);
     if (!isValid) {
       setErrorMessage(errorMessage2);
-      return isValid;
+      setValue((prev2) => {
+        const newDateObj = { ...prev2 };
+        newDateObj[key].isValid = isValid;
+        return newDateObj;
+      });
     }
-    return isValid;
   };
+  function isAllValidDate(value2) {
+    return value2.month.isValid && value2.year.isValid;
+  }
+  function isAllFilledDate(value2) {
+    return value2.month.value.length === 2 && value2.year.value.length === 2;
+  }
+  function isAllInRange(value2) {
+    const isMonthInRange = parseInt(value2.month.value) >= 1 && parseInt(value2.month.value) <= 12;
+    const isYearInRange = parseInt(value2.year.value) >= (/* @__PURE__ */ new Date()).getFullYear() % 100;
+    return isMonthInRange && isYearInRange;
+  }
+  function checkCanMoveNextStep(value2) {
+    const isAllValid = isAllValidDate(value2);
+    const isAllFilled = isAllFilledDate(value2);
+    const isAllDateInRange = isAllInRange(value2);
+    return isAllValid && isAllFilled && isAllDateInRange;
+  }
   return { value, errorMessage, handleChange, handleBlur, isAllValidAndFilled };
 };
-function isAllValidDate(value) {
-  return value.month.isValid && value.year.isValid;
-}
-function isAllFilledDate(value) {
-  return value.month.value.length === 2 && value.year.value.length === 2;
-}
-function isAllInRange(value) {
-  const isMonthInRange = parseInt(value.month.value) >= 1 && parseInt(value.month.value) <= 12;
-  const isYearInRange = parseInt(value.year.value) >= (/* @__PURE__ */ new Date()).getFullYear() % 100;
-  return isMonthInRange && isYearInRange;
-}
-function canMoveNextStep(value) {
-  const isAllValid = isAllValidDate(value);
-  const isAllFilled = isAllFilledDate(value);
-  const isAllDateInRange = isAllInRange(value);
-  return isAllValid && isAllFilled && isAllDateInRange;
-}
 const CardFormLayout = ({ children }) => {
   return /* @__PURE__ */ jsx$1("form", { children: /* @__PURE__ */ jsx$1(Flex, { direction: "column", gap: "10px", margin: "30px 0", flex: 0, children }) });
+};
+const FORM_STEP_NUMBERS = {
+  cardNumber: 0,
+  brand: 1,
+  expireDate: 2,
+  cvc: 3,
+  password: 4
 };
 const useFormStep = ({
   canMoveNextFromCardNumber,
@@ -20323,21 +20307,17 @@ const useFormStep = ({
 }) => {
   const [step, setStep] = reactExports.useState(0);
   reactExports.useEffect(() => {
-    if (step === 3 && canMoveNextFromCVC) {
+    const stepCompletes = [
+      { stepNumber: FORM_STEP_NUMBERS.cvc, isCompleted: canMoveNextFromCVC },
+      { stepNumber: FORM_STEP_NUMBERS.expireDate, isCompleted: canMoveNextFromExpireDate },
+      { stepNumber: FORM_STEP_NUMBERS.brand, isCompleted: selectedBrand },
+      { stepNumber: FORM_STEP_NUMBERS.cardNumber, isCompleted: canMoveNextFromCardNumber },
+      { stepNumber: FORM_STEP_NUMBERS.password, isCompleted: canMoveNextFromPassword }
+    ];
+    const currentStep = stepCompletes.find((stepComplete) => stepComplete.stepNumber === step);
+    if (!currentStep) return;
+    if (currentStep.isCompleted) {
       setStep(step + 1);
-      return;
-    }
-    if (step === 2 && canMoveNextFromExpireDate) {
-      setStep(step + 1);
-      return;
-    }
-    if (step === 1 && selectedBrand) {
-      setStep(step + 1);
-      return;
-    }
-    if (step === 0 && canMoveNextFromCardNumber) {
-      setStep(step + 1);
-      return;
     }
   }, [
     canMoveNextFromCardNumber,
@@ -20349,6 +20329,7 @@ const useFormStep = ({
   return { step };
 };
 const Register = () => {
+  const navigate = useNavigate();
   const {
     value: cardNumbers,
     errorMessage: cardErrorMessage,
@@ -20356,12 +20337,7 @@ const Register = () => {
     handleBlur,
     isAllValidAndFilled: canMoveNextFromCardNumber
   } = useCardInput("cardNumber");
-  const {
-    isOpen,
-    selectedItem: selectedBrand,
-    handleItemSelect: handleBrandSelect,
-    handleToggleSelect
-  } = useBrandSelectInput();
+  const { selectedItem: selectedBrand, handleItemSelect: handleBrandSelect } = useBrandSelectInput();
   const {
     value: expireDate,
     errorMessage: expireDateErrorMessage,
@@ -20390,62 +20366,80 @@ const Register = () => {
     selectedBrand,
     canMoveNextFromPassword
   });
-  const isAllClearInput = step >= 4 && canMoveNextFromPassword && canMoveNextFromCVC && canMoveNextFromExpireDate && canMoveNextFromCardNumber && selectedBrand !== null;
+  const isAllValidInput = canMoveNextFromPassword && canMoveNextFromCVC && canMoveNextFromExpireDate && canMoveNextFromCardNumber && selectedBrand !== null;
+  const isUserCanSubmit = step >= 4 && isAllValidInput;
+  const handleSubmit = (cardType, cardNumber) => {
+    navigate("/result", { state: { cardType, cardNumber } });
+  };
+  const formSteps = [
+    {
+      id: "cardNumber",
+      Component: CardNumberForm,
+      props: {
+        cardNumbers,
+        errorMessage: cardErrorMessage,
+        onCardInputChange: handleChange,
+        onCardInputBlur: handleBlur
+      },
+      stepNumber: FORM_STEP_NUMBERS.cardNumber
+    },
+    {
+      id: "brand",
+      Component: CardBrandSelectForm,
+      props: { selectedItem: selectedBrand, onItemSelect: handleBrandSelect },
+      stepNumber: FORM_STEP_NUMBERS.brand
+    },
+    {
+      id: "expireDate",
+      Component: ExpireDateForm,
+      props: {
+        expireDate,
+        errorMessage: expireDateErrorMessage,
+        onCardExpireDateInputChange: handleExpireDateChange,
+        onCardExpireDateInputBlur: handleExpireDateBlur
+      },
+      stepNumber: FORM_STEP_NUMBERS.expireDate
+    },
+    {
+      id: "cvc",
+      Component: CVCForm,
+      props: {
+        cvcNumber,
+        errorMessage: cvcErrorMessage,
+        onCardInputChange: handleCVCChange,
+        onCardInputBlur: handleCVCBlur
+      },
+      stepNumber: FORM_STEP_NUMBERS.cvc
+    },
+    {
+      id: "password",
+      Component: CardPasswordForm,
+      props: {
+        password,
+        errorMessage: passwordErrorMessage,
+        onCardInputChange: handlePasswordChange,
+        onCardInputBlur: handlePasswordBlur
+      },
+      stepNumber: FORM_STEP_NUMBERS.password
+    }
+  ];
   return /* @__PURE__ */ jsxs(AppLayout, { children: [
-    /* @__PURE__ */ jsx$1(Flex, { padding: "20px 0", flex: 0, children: /* @__PURE__ */ jsx$1(CardPreview, { cardNumbers, expireDate, cardBrand: selectedBrand }) }),
-    /* @__PURE__ */ jsxs(CardFormLayout, { children: [
-      step >= 4 && /* @__PURE__ */ jsx$1(
-        CardPasswordForm,
-        {
-          password,
-          errorMessage: passwordErrorMessage,
-          onCardInputChange: handlePasswordChange,
-          onCardInputBlur: handlePasswordBlur
-        }
-      ),
-      step >= 3 && /* @__PURE__ */ jsx$1(
-        CVCForm,
-        {
-          cvcNumber,
-          errorMessage: cvcErrorMessage,
-          onCardInputChange: handleCVCChange,
-          onCardInputBlur: handleCVCBlur
-        }
-      ),
-      step >= 2 && /* @__PURE__ */ jsx$1(
-        ExpireDateForm,
-        {
-          expireDate,
-          errorMessage: expireDateErrorMessage,
-          onCardExpireDateInputChange: handleExpireDateChange,
-          onCardExpireDateInputBlur: handleExpireDateBlur
-        }
-      ),
-      step >= 1 && /* @__PURE__ */ jsx$1(
-        CardBrandSelectForm,
-        {
-          isOpen,
-          selectedItem: selectedBrand,
-          onItemSelect: handleBrandSelect,
-          onToggle: handleToggleSelect
-        }
-      ),
-      /* @__PURE__ */ jsx$1(
-        CardNumberForm,
-        {
-          cardNumbers,
-          errorMessage: cardErrorMessage,
-          onCardInputChange: handleChange,
-          onCardInputBlur: handleBlur
-        }
-      )
-    ] }),
-    isAllClearInput && /* @__PURE__ */ jsx$1(
+    /* @__PURE__ */ jsx$1(Flex, { padding: "20px 0", flex: 0, children: /* @__PURE__ */ jsx$1(
+      CardPreview,
+      {
+        cardNumbers,
+        expireDate,
+        cardBrand: selectedBrand
+      }
+    ) }),
+    /* @__PURE__ */ jsx$1(CardFormLayout, { children: formSteps.sort((a, b) => b.stepNumber - a.stepNumber).filter((formStep) => formStep.stepNumber <= step).map((formStep) => {
+      return /* @__PURE__ */ jsx$1(formStep.Component, { ...formStep.props }, formStep.id);
+    }) }),
+    isUserCanSubmit && /* @__PURE__ */ jsx$1(
       SubmitButton,
       {
-        cardType: selectedBrand,
-        cardNumber: cardNumbers[0].value,
-        buttonText: "확인"
+        onSubmit: () => handleSubmit(selectedBrand, cardNumbers[0].value),
+        children: "확인"
       }
     )
   ] });
@@ -20457,31 +20451,38 @@ const StyledCompleteIcon = newStyled.div`
   border-radius: 50%;
 `;
 const CompleteImage = () => {
-  return /* @__PURE__ */ jsx$1(StyledCompleteIcon, { children: /* @__PURE__ */ jsx$1(Flex, { justifyContent: "center", alignItems: "center", width: "100%", height: "100%", children: /* @__PURE__ */ jsx$1(CustomImage, { src: "./icon/Vector3.png", alt: "complete", width: "32px", height: "20px" }) }) });
+  return /* @__PURE__ */ jsx$1(StyledCompleteIcon, { children: /* @__PURE__ */ jsx$1(Flex, { justifyContent: "center", alignItems: "center", width: "100%", height: "100%", children: /* @__PURE__ */ jsx$1("img", { src: "./icon/Vector3.png", alt: "complete", width: "32px", height: "20px" }) }) });
 };
 const Result = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { cardType, cardNumber } = location.state;
   return /* @__PURE__ */ jsx$1(AppLayout, { children: /* @__PURE__ */ jsxs(Flex, { direction: "column", gap: "20px", width: "80%", margin: "0 auto", children: [
-    /* @__PURE__ */ jsx$1(CompleteImage, {}),
-    /* @__PURE__ */ jsx$1(Text, { variant: "Title", fontWeight: "bold", children: `${cardNumber}로 시작하는` }),
-    /* @__PURE__ */ jsx$1(Text, { variant: "Title", fontWeight: "bold", children: `${cardType}가 등록되었습니다.` }),
+    cardType && cardNumber ? /* @__PURE__ */ jsxs(Fragment, { children: [
+      /* @__PURE__ */ jsx$1(CompleteImage, {}),
+      /* @__PURE__ */ jsx$1(Text, { variant: "Title", fontWeight: "bold", children: `${cardNumber}로 시작하는` }),
+      /* @__PURE__ */ jsx$1(Text, { variant: "Title", fontWeight: "bold", children: `${cardType}가 등록되었습니다.` })
+    ] }) : /* @__PURE__ */ jsx$1("div", { children: /* @__PURE__ */ jsx$1(Text, { variant: "Title", fontWeight: "bold", children: "카드 정보가 없습니다." }) }),
     /* @__PURE__ */ jsx$1(Button, { height: "60px", borderType: "rounded", onClick: () => navigate("/"), children: /* @__PURE__ */ jsx$1(Text, { variant: "Title", fontWeight: "medium", color: "white", children: "홈으로 이동" }) })
   ] }) });
+};
+const ROUTE_PATH = {
+  HOME: "/",
+  REGISTER: "/register",
+  RESULT: "/result"
 };
 const router = createBrowserRouter(
   [
     {
-      path: "/",
+      path: ROUTE_PATH.HOME,
       element: /* @__PURE__ */ jsx$1(Home, {})
     },
     {
-      path: "/register",
+      path: ROUTE_PATH.REGISTER,
       element: /* @__PURE__ */ jsx$1(Register, {})
     },
     {
-      path: "/result",
+      path: ROUTE_PATH.RESULT,
       element: /* @__PURE__ */ jsx$1(Result, {})
     }
   ],
